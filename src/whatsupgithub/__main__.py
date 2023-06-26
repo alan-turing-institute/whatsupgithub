@@ -44,7 +44,7 @@ def to_table(repos):
         row.append(has_file(repo, 'LICENSE'))
         row.append(has_file(repo, 'README.md'))
         row.append(repo.open_issues_count)
-        row.append(repo.open_pulls_count)
+        row.append(len([p for p in repo.get_pulls()]))
         row.append(repo.get_commits().totalCount)
         row.append([p.login for p in repo.get_contributors()])
         # days since last issue
@@ -54,17 +54,16 @@ def to_table(repos):
         c = max([datetime.strptime(a.last_modified, '%a, %d %b %Y %H:%M:%S %Z') for a in repo.get_commits()])
         row.append((c.today() - c).days)
         rows.append(row)
-
+    return rows
 
 def main():
     token = environ['GITHUB_AUTH'] 
     auth = Auth.Token(token)
     g = Github(auth=auth)
-    g.get_organization(DEFAULT_ORG).get_repos()
     if PRIVATE:
-        repos = g.get_organization(DEFAULT_ORG).get_repos()
+        repos = [r for r in g.get_organization(DEFAULT_ORG).get_repos()]
     else:
-        repos = g.get_organization(DEFAULT_ORG).get_repos(type='private')
+        repos = [r for r in g.get_organization(DEFAULT_ORG).get_repos(type='private')]
 
     tbl = to_table(repos)
 
