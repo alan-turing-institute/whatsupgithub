@@ -32,6 +32,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy",
     "tqdm",
+    "PyGithub"
 ]
 
 [project.urls]
