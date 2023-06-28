@@ -3,8 +3,8 @@ from datetime import datetime
 from os import environ
 
 import pandas as pd
+import tqdm.asyncio
 from github import Auth, Github
-from tqdm import tqdm
 
 DEFAULT_ORG = "alan-turing-institute"
 
@@ -36,7 +36,33 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-def to_table(repos):
+def get_repo_data(repo):
+    row = []
+    row.append(repo.name)
+    row.append(repo.description)
+    row.append(repo.url)
+    row.append(has_file(repo, "LICENSE"))
+    row.append(has_file(repo, "README.md"))
+    row.append(repo.open_issues_count)
+    row.append(len(list(repo.get_pulls())))
+    row.append(repo.get_commits().totalCount)
+    row.append([p.login for p in repo.get_contributors()])
+    # days since last issue
+    try:
+        d = max([i.updated_at for i in repo.get_issues()])
+        row.append((d.today() - d).days)
+    except ValueError:
+        d = "N/A"
+        row.append("N/A")
+    # days since last commit
+    c = datetime.strptime(
+        repo.get_commits()[0].last_modified, "%a, %d %b %Y %H:%M:%S %Z"
+    )
+    row.append((c.today() - c).days)
+    return row
+
+
+async def to_table(repos):
     """
     Generates a CSV of repos where columns should include:
     - repo name
@@ -52,33 +78,8 @@ def to_table(repos):
     - days since last commit
     """
 
-    rows = []
+    rows = await tqdm.asyncio.gather(*map(get_repo_data, repos))
 
-    for repo in tqdm(repos):
-        row = []
-        row.append(repo.name)
-        row.append(repo.description)
-        row.append(repo.url)
-        row.append(has_file(repo, "LICENSE"))
-        row.append(has_file(repo, "README.md"))
-        row.append(repo.open_issues_count)
-        row.append(len(list(repo.get_pulls())))
-        row.append(repo.get_commits().totalCount)
-        row.append([p.login for p in repo.get_contributors()])
-        # days since last issue
-
-        try:
-            d = max([i.updated_at for i in repo.get_issues()])
-            row.append((d.today() - d).days)
-        except ValueError:
-            d = "N/A"
-            row.append("N/A")
-        # days since last commit
-        c = datetime.strptime(
-            repo.get_commits()[0].last_modified, "%a, %d %b %Y %H:%M:%S %Z"
-        )
-        row.append((c.today() - c).days)
-        rows.append(row)
     return pd.DataFrame(
         rows,
         columns=[
