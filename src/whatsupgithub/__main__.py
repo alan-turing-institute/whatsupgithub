@@ -1,7 +1,9 @@
 from datetime import datetime
 from os import environ
 
+import pandas as pd
 from github import Auth, Github
+from tqdm import tqdm
 
 DEFAULT_ORG = "alan-turing-institute"
 PRIVATE = False
@@ -36,7 +38,7 @@ def to_table(repos):
 
     rows = []
 
-    for repo in repos:
+    for repo in tqdm(repos):
         row = []
         row.append(repo.name)
         row.append(repo.description)
@@ -56,15 +58,27 @@ def to_table(repos):
             d = "N/A"
             row.append("N/A")
         # days since last commit
-        c = max(
-            [
-                datetime.strptime(a.last_modified, "%a, %d %b %Y %H:%M:%S %Z")
-                for a in repo.get_commits()
-            ]
+        c = datetime.strptime(
+            repo.get_commits()[0].last_modified, "%a, %d %b %Y %H:%M:%S %Z"
         )
         row.append((c.today() - c).days)
         rows.append(row)
-    return rows
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "name",
+            "description",
+            "url",
+            "license",
+            "readme",
+            "issues",
+            "pulls",
+            "commits",
+            "contributors",
+            "days_since_last_issue",
+            "days_since_last_commit",
+        ],
+    )
 
 
 def main():
