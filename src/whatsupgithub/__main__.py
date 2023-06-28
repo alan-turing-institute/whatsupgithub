@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 from os import environ
 
@@ -6,7 +7,6 @@ from github import Auth, Github
 from tqdm import tqdm
 
 DEFAULT_ORG = "alan-turing-institute"
-PRIVATE = False
 
 FILES_TO_CHECK = ["README.md", "LICENSE"]
 
@@ -18,6 +18,22 @@ def has_file(repo, filename):
         return True
     except Exception:
         return False
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Get stats on a GitHub org")
+    parser.add_argument(
+        "--org",
+        type=str,
+        default=DEFAULT_ORG,
+        help="GitHub organisation to get stats for",
+    )
+    parser.add_argument(
+        "--private",
+        default=False,
+        help="Include private repos in the stats",
+    )
+    return vars(parser.parse_args())
 
 
 def to_table(repos):
@@ -85,10 +101,11 @@ def main():
     token = environ["GITHUB_AUTH"]
     auth = Auth.Token(token)
     g = Github(auth=auth)
-    if PRIVATE:
-        repos = list(g.get_organization(DEFAULT_ORG).get_repos())
+    args = parse_args()
+    if not args["private"]:
+        repos = list(g.get_organization(args["org"]).get_repos())
     else:
-        repos = list(g.get_organization(DEFAULT_ORG).get_repos(type="private"))
+        repos = list(g.get_organization(args["org"]).get_repos(type="private"))
 
     tbl = to_table(repos)
     tbl.to_csv("repos.csv")
