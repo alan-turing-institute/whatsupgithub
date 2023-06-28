@@ -48,7 +48,11 @@ def to_table(repos):
         row.append(repo.get_commits().totalCount)
         row.append([p.login for p in repo.get_contributors()])
         # days since last issue
-        d = max([i.updated_at for i in repo.get_issues()])
+
+        try:
+            d = max([i.updated_at for i in repo.get_issues()])
+        except ValueError:
+            d = "N/A"
         row.append((d.today() - d).days)
         # days since last commit
         c = max(

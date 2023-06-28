@@ -1,5 +1,7 @@
 # WhatsPpGitHub
 
+# Note: this project is still in development and doesn't work yet 😅
+
 To run this project please install via pip
 
 ```bash
