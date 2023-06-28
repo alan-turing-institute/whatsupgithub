@@ -3,8 +3,8 @@ from datetime import datetime
 from os import environ
 
 import pandas as pd
-import tqdm.asyncio
 from github import Auth, Github
+from tqdm.asyncio import tqdm_asyncio
 
 DEFAULT_ORG = "alan-turing-institute"
 
@@ -78,7 +78,7 @@ async def to_table(repos):
     - days since last commit
     """
 
-    rows = await tqdm.asyncio.gather(*map(get_repo_data, repos))
+    rows = await tqdm_asyncio.gather(*map(get_repo_data, repos))
 
     return pd.DataFrame(
         rows,
