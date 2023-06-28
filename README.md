@@ -1,6 +1,15 @@
 # WhatsPpGitHub
 
-# Note: this project is still in development and doesn't work yet 😅
+## Setup Token
+
+Currently, this project reads in your GitHub token from the shell environment.
+For example either use or add to your shell rc:
+
+```bash
+export GITHUB_AUTH=your_token_here
+```
+
+## Running
 
 To run this project please install via pip
 
