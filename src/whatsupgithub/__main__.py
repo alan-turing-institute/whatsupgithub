@@ -205,7 +205,7 @@ def main():
         if args["all"]:
             for repo in tqdm(repos):
                 # If repo folder exists then skip
-                if Path.isfile(f"{args['out_folder']}/{repo.name}.csv"):
+                if Path(f"{args['out_folder']}/{repo.name}.csv").is_file():
                     continue
                 tbl = get_all_commit_issue_comments_info(repo)
                 tbl.to_csv(f"{args['out_folder']}/{repo.name}.csv")
