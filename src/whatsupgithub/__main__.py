@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 from datetime import datetime
 from os import environ
 from pathlib import Path
@@ -191,8 +190,7 @@ def main():
 
     # Check out folder exists and make the folder if it doesn't
     if args["out_folder"] != "./":
-        with contextlib.suppress(OSError):
-            Path.as_urimakedirs(args["out_folder"])
+        Path.mkdir(args["out_folder"])
 
     if args["repo"] is not None:
         repo = g.get_repo(args["repo"])
