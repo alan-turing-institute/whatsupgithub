@@ -84,6 +84,7 @@ disallow_incomplete_defs = false
 
 
 [tool.ruff]
+line-length = 100  # defaults to 88 like black
 select = [
   "E", "F", "W", # flake8
   "B",           # flake8-bugbear
