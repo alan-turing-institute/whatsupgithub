@@ -1,6 +1,8 @@
 import argparse
+import contextlib
 from datetime import datetime
 from os import environ
+from pathlib import Path
 
 import pandas as pd
 from github import Auth, Github, UnknownObjectException
@@ -43,6 +45,12 @@ def parse_args():
         help="Include private repos in the stats",
     )
     parser.add_argument("--repo", default=None, help="Get stats for a single repo")
+    parser.add_argument(
+        "--all",
+        default=False,
+        help="Get stats for all repos and stores in individual csv files",
+    )
+    parser.add_argument("--out_folder", default="./", help="Folder to store csv files")
     return vars(parser.parse_args())
 
 
@@ -102,14 +110,14 @@ def get_all_commit_issue_comments_info(repo):
     for issue in tqdm(repo.get_issues()):
         row = []
         row.append(issue.user.login)
-        row.append(issue.created_at.strftime("%a, %d %b %Y %H:%M:%S %Z"))
+        row.append(issue.created_at)
         row.append("issue")
         rows.append(row)
 
         for comment in issue.get_comments():
             row = []
             row.append(comment.user.login)
-            row.append(comment.created_at.strftime("%a, %d %b %Y %H:%M:%S %Z"))
+            row.append(comment.created_at)
             row.append("comment")
             rows.append(row)
 
@@ -154,9 +162,7 @@ def repo_info_to_table(repos):
             d = "N/A"
             row.append("N/A")
         # days since last commit
-        c = datetime.strptime(
-            repo.get_commits()[0].last_modified, "%a, %d %b %Y %H:%M:%S %Z"
-        )
+        c = github_to_timestamp(repo.get_commits()[0])
         row.append((c.today() - c).days)
         rows.append(row)
     return pd.DataFrame(
@@ -182,18 +188,32 @@ def main():
     auth = Auth.Token(token)
     g = Github(auth=auth)
     args = parse_args()
+
+    # Check out folder exists and make the folder if it doesn't
+    if args["out_folder"] != "./":
+        with contextlib.suppress(OSError):
+            Path.as_urimakedirs(args["out_folder"])
+
     if args["repo"] is not None:
         repo = g.get_repo(args["repo"])
         tbl = get_all_commit_issue_comments_info(repo)
-        tbl.to_csv("repo.csv")
+        tbl.to_csv(f"{args['out_folder']}/repo.csv")
     else:
         if not args["private"]:
             repos = list(g.get_organization(args["org"]).get_repos())
         else:
             repos = list(g.get_organization(args["org"]).get_repos(type="private"))
 
-        tbl = repo_info_to_table(repos)
-        tbl.to_csv("repos.csv")
+        if args["all"]:
+            for repo in tqdm(repos):
+                # If repo folder exists then skip
+                if Path.isfile(f"{args['out_folder']}/{repo.name}.csv"):
+                    continue
+                tbl = get_all_commit_issue_comments_info(repo)
+                tbl.to_csv(f"{args['out_folder']}/{repo.name}.csv")
+        else:
+            tbl = repo_info_to_table(repos)
+            tbl.to_csv(f"{args['out_folder']}/repos.csv")
 
 
 if __name__ == "__main__":
