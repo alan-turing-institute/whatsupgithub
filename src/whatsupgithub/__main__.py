@@ -190,7 +190,7 @@ def main():
 
     # Check out folder exists and make the folder if it doesn't
     if args["out_folder"] != "./":
-        Path.mkdir(args["out_folder"])
+        Path(args["out_folder"]).mkdir(parents=True, exist_ok=True)
 
     if args["repo"] is not None:
         repo = g.get_repo(args["repo"])
