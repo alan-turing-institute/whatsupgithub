@@ -1,4 +1,4 @@
-# WhatsPpGitHub
+# WhatsUpGitHub
 
 ## Setup Token
 
